@@ -1,41 +1,70 @@
-(ns adventure-in-core-logic.getting_started
+(ns adventure_in_core_logic.getting_started
   (:refer-clojure :exclude [reify inc ==])
-  (:use [clojure.core.logic]))
-
+  (:require [clojure.core.logic :as l]
+        [clojure.core.logic.pldb :as pldb]))
 
 (defn istrue [vfact var]
-  (if (empty? (run 1 [q] (vfact var))) 'no 'yes))
+  (if (empty? (l/run 1 [q] (vfact var))) 'no 'yes))
 
-
-(defrel person x)
+(pldb/db-rel person x)
 
 (defn mortal [x] (person x))
 
-(fact person 'Socrates)
-(fact person 'Plato)
+(def people
+  (pldb/db 
+   [person 'Socrates]
+   [person 'Plato]))
 
-;;(run* [q] (mortal 'Socrates))
-(istrue mortal 'Socrates)
+(pldb/with-db people 
+  (istrue mortal 'Socrates))
 
-(run 1 [q] (mortal q))
+(pldb/with-db people 
+    (l/run* [q] (mortal q)))
+
+(pldb/with-db people
+    (l/run* [q] (mortal 'Socrates)))
 
 ;;(println "hello world")
 
-(fact person 'Zeno)
-(fact person 'Aristotle)
+(def morepeople 
+  (-> people
+      (pldb/db-fact person 'Zeno)
+      (pldb/db-fact person 'Arisotle)))
+
+(pldb/with-db morepeople
+  (l/run* [q] (mortal q)))
 
 (defn mortal-report []
   (println "Known mortals are:")
-  (doseq [i (run* [q] (mortal q))] (println i)))
+  (doseq [i (pldb/with-db morepeople (l/run* [q] (mortal q)))] (println i)))
 
-(defrel customer name city credit)
-(fact customer "John Jones" 'Boston 'good_credit)
-(fact customer "Sally Smith" 'Chicago 'good_credit)
+(mortal-report)
 
+(pldb/db-rel customer)
 
-(defrel window name ux uy lx ly)
-(fact window 'main 2 2 20 72)
-(fact window 'errors 15 40 20 78)
+(def customerlist
+  (pldb/db
+    [customer "John Jones" 'Boston 'good_credit]
+    [customer "Sally Smith" 'Chicago 'good_credit]))
 
-(defrel disease name prop)
-(fact disease 'plague 'infectious)
+(pldb/with-db customerlist
+  (l/run* [name name city credit] (customer name city credit)))
+
+(pldb/db-rel window name ux uy lx ly)
+
+(def windowlist
+  (pldb/db
+      [window 'main 2 2 20 72]
+      [window 'errors 15 40 20 78]))
+
+(pldb/with-db windowlist 
+  (l/run* [name ux uy lx ly] (window name ux uy lx ly)))
+
+(pldb/db-rel disease name prop)
+
+(def diseaselist
+  (-> pldb/empty-db
+     (pldb/db-fact disease 'plague 'infectious)))
+
+(pldb/with-db diseaselist
+  (l/run* [name prop] (disease name prop)))

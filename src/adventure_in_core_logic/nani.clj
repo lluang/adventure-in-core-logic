@@ -1,106 +1,122 @@
-(ns adventure-in-core-logic.nani
+(ns adventure_in_core_logic.nani
   (:refer-clojure :exclude [reify inc ==])
-  (:use [clojure.core.logic]))
+  (:require [clojure.core.logic :as l]
+            [clojure.core.logic.pldb :as pldb]))
 
-(defrel room rtype)
-(fact room 'kitchen)
-(fact room 'office)
-(fact room 'hall)
-(fact room 'dining_room)
-(fact room 'cellar)
+(pldb/db-rel room rtype)
+(pldb/db-rel location thing room)
+(pldb/db-rel door room1 room2)
+(pldb/db-rel edible thing)
+(pldb/db-rel tastes_yucky thing)
+(pldb/db-rel turned_off thing)
 
-(defrel location thing room)
-(fact location 'desk 'office)
-(fact location 'apple 'kitchen)
-(fact location 'flashlight 'desk)
-(fact location 'washing_machine 'cellar)
-(fact location 'nani 'washing_machine)
-(fact location 'broccoli 'kitchen)
-(fact location 'crackers 'kitchen)
-(fact location 'computer 'office)
+(def nani_facts
+  (pldb/db
+   [room 'kitchen]
+   [room 'office]
+   [room 'hall]
+   [room 'dining_room]
+   [room 'cellar]
 
-(defrel door room1 room2)
-(fact door 'office 'hall)
-(fact door 'kitchen 'office)
-(fact door 'hall 'dining_room)
-(fact door 'kitchen 'cellar)
-(fact door 'dining_room 'kitchen)
+   [location 'desk 'office]
+   [location 'apple 'kitchen]
+   [location 'flashlight 'desk]
+   [location 'washing_machine 'cellar]
+   [location 'nani 'washing_machine]
+   [location 'broccoli 'kitchen]
+   [location 'crackers 'kitchen]
+   [location 'computer 'office]
 
-(defrel edible thing)
-(fact edible 'apple)
-(fact edible 'crackers)
+   [door 'office 'hall]
+   [door 'kitchen 'office]
+   [door 'hall 'dining_room]
+   [door 'kitchen 'cellar]
+   [door 'dining_room 'kitchen]
 
-(defrel tastes_yucky thing)
-(fact tastes_yucky 'broccoli)
+   [edible 'apple]
+   [edible 'crackers]
 
-(defrel turned_off thing)
-(fact turned_off 'flashlight)
+   [tastes_yucky 'broccoli]
 
-;;(defrel here room)
-;;(fact here 'kitchen)
+   [turned_off 'flashlight]))
+;;(pldb/db-rel here room)
+;;(pldb/db-fact here 'kitchen)
 (def here (atom 'kitchen))
 
 (defn istrue [vfact var]
-  (if (empty? (run 1 [q] (vfact var))) 'no 'yes))
+  (if (empty? (l/run 1 [q] (vfact var))) 'no 'yes))
 
-(istrue room 'office)
-(istrue room 'attic)
+(pldb/with-db nani_facts 
+  (istrue room 'office))
+(pldb/with-db nani_facts 
+  (istrue room 'attic))
 
-(run 1 [q] (location 'apple 'kitchen));;_.0 -> yes
+(pldb/with-db nani_facts 
+  (l/run 1 [q] (location 'apple 'kitchen)));;_.0 -> yes
 
-(run* [q] (room q))
+(pldb/with-db nani_facts 
+  (l/run* [q] (room q)))
 
-(run* [q] (fresh [Thing Place] (== q [Thing Place]) (location Thing Place)))
+(pldb/with-db nani_facts 
+  (l/run* [q] (l/fresh [Thing Place] (l/== q [Thing Place]) (location Thing Place))))
 
 ;;compound queries
-(run* [q] (location q 'kitchen) (edible q))
+(pldb/with-db nani_facts 
+  (l/run* [q] (location q 'kitchen) (edible q)))
 ;;(crackers apple)
-
-(run* [q] (fresh [R T] (door 'kitchen R) (location T R) (== q [R T])))
+(pldb/with-db nani_facts 
+  (l/run* [q] (l/fresh [R T] (door 'kitchen R) (location T R) (l/== q [R T]))))
 
 ;; Everything in kitchen
-;;(doseq [i (run* [q] (location q 'kitchen))] (println i))
-
+;;(doseq [i (l/run* [q] (location q 'kitchen))] (println i))
 
 ;;rules
 (defn where_food [x y]
-  (all (location x y)
+  (l/all (location x y)
        (edible x)))
 
-(run* [q] (where_food q 'kitchen))
+(pldb/with-db nani_facts 
+  (l/run* [q] (where_food q 'kitchen)))
 
-(run* [Thing] (where_food Thing 'dining_room))
+(pldb/with-db nani_facts 
+  (l/run* [Thing] (where_food Thing 'dining_room)))
 
-(run 1 [q] (where_food 'apple 'kitchen));; yes/no
+(pldb/with-db nani_facts 
+  (l/run 1 [q] (where_food 'apple 'kitchen)));; yes/no
 
-(run* [q] (fresh [Thing Room] (where_food Thing Room) (== q [Thing Room])))
-
+(pldb/with-db nani_facts 
+  (l/run* [q] (l/fresh [Thing Room] (where_food Thing Room) (l/== q [Thing Room]))))
 
 (defn where_food [x y]
-  (conde
-    ((all (location x y)
+  (l/conde
+    ((l/all (location x y)
           (edible x)))
-    ((all (location x y)
+    ((l/all (location x y)
           (tastes_yucky x)))))
 
-(run* [q] (where_food q 'kitchen))
+(l/run* [q] (where_food q 'kitchen))
 
 
 (defn connect [x y]
-  (conde
-    ((door x y))
-    ((door y x))))
+ 
+    (l/conde
+     ((door x y))
+     ((door y x))))
 
-(run 1 [q] (connect 'kitchen 'office))
-(run 1 [q] (connect 'office 'kitchen))
+(pldb/with-db nani_facts 
+  (l/run 1 [q] (connect 'kitchen 'office)))
 
-(run* [q] (fresh [X Y] (connect X Y) (== q [X Y])))
+(pldb/with-db nani_facts 
+  (l/run 1 [q] (connect 'office 'kitchen)))
+
+(pldb/with-db nani_facts 
+  (l/run* [q] (l/fresh [X Y] (connect X Y) (l/== q [X Y]))))
 
 (defn list_things [Place]
-  (run* [q] (location q Place)))
+  (l/run* [q] (location q Place)))
 
 (defn list_connections [Place]
-  (run* [q] (connect Place q)))
+  (l/run* [q] (connect Place q)))
 
 (defn look []
   (let [Place @here]
@@ -111,7 +127,7 @@
     (doseq [i (list_connections Place)] (println "  " i))))
 
 (defn look_in [where]
-  (run* [q] (location q where)))
+  (l/run* [q] (location q where)))
 
 ;;arithmetic -> this is a lisp dialect :D
 ;;(def some_arithmetic (+ 1 (/ 280 (* 7 4)))
@@ -120,7 +136,7 @@
 ;;We are gonna use Clojure's Atoms for storing the current location: here
 
 (defn can_go [Place]
-  (if ((comp not empty?) (run* [q] (connect @here Place)))
+  (if ((comp not empty?) (l/run* [q] (connect @here Place)))
     true
     (println "You can't get there form here.")))
 
@@ -128,7 +144,7 @@
 ;;(can_go 'office)
 ;;(can_go 'hall)
 
-;; Clojure solution (we use an atom insted of deleting the fact here and refreshing it)
+;; Clojure solution (we use an atom insted of deleting the pldb/db-fact here and refreshing it)
 (defn move [Place]
   (reset! here Place))
 
@@ -140,15 +156,15 @@
 ;;(goto 'office)
 
 (defn can_take [Thing]
-  (if ((comp not empty?) (run* [q] (location Thing @here)))
+  (if ((comp not empty?) (l/run* [q] (location Thing @here)))
     true
     (println "There is no" Thing "here.")))
 
-(defrel have x)
+(pldb/db-rel have x)
 
 (defn take_object [x]
-  (retraction location x @here)
-  (fact have x)
+  (pldb/db-retraction location x @here)
+  (pldb/db-fact have x)
   (println "taken"))
 
 ;; take is reserved
@@ -157,24 +173,26 @@
     (take_object x)))
 
 (defn put [x]
-  (if ((comp not empty?) (run* [q] (have x)))
-    (do (retraction have x) (fact location x @here) (println "Putting" x "down"))
+  (if ((comp not empty?) (l/run* [q] (have x)))
+    (do (retraction have x) (pldb/db-fact location x @here) (println "Putting" x "down"))
     (println "You don't have" x)))
 
 (defn inventory []
   (println "You have: ")
-  (doseq [i (run* [q] (have q))] (println i)))
+  (doseq [i (l/run* [q] (have q))] (println i)))
 
 ;; TODO: Excercise 4 5
 
-(run* [q] (location 'flashlight 'office)) ;; ()
 
-(fact location 'envelope 'desk)
-(fact location 'stamp 'envelope)
-(fact location 'key 'envelope)
+(pldb/with-db nani_facts 
+  (l/run* [q] (location 'flashlight 'office))) ;; ()
+
+(pldb/db-fact location 'envelope 'desk)
+(pldb/db-fact location 'stamp 'envelope)
+(pldb/db-fact location 'key 'envelope)
 
 (defn is_contained_in [T1 T2]
-  (conde
+  (l/conde
     ((location T1 T2))
-    ((fresh [X] (location X T2)
+    ((l/fresh [X] (location X T2)
                 (is_contained_in T1 X)))))
