@@ -94,12 +94,12 @@
     ((l/all (location x y)
           (tastes_yucky x)))))
 
-(l/run* [q] (where_food q 'kitchen))
+(pldb/with-db nani_facts 
+  (l/run* [q] (where_food q 'kitchen)))
 
 
 (defn connect [x y]
- 
-    (l/conde
+     (l/conde
      ((door x y))
      ((door y x))))
 
@@ -141,8 +141,8 @@
     (println "You can't get there form here.")))
 
 ;;true / nil
-;;(can_go 'office)
-;;(can_go 'hall)
+(pldb/with-db nani_facts (can_go 'office))
+(pldb/with-db nani_facts (can_go 'hall))
 
 ;; Clojure solution (we use an atom insted of deleting the pldb/db-fact here and refreshing it)
 (defn move [Place]
@@ -153,7 +153,8 @@
     (move Place))
   (look))
 
-;;(goto 'office)
+(pldb/with-db nani_facts 
+  (goto 'kitchen))
 
 (defn can_take [Thing]
   (if ((comp not empty?) (l/run* [q] (location Thing @here)))
@@ -174,7 +175,7 @@
 
 (defn put [x]
   (if ((comp not empty?) (l/run* [q] (have x)))
-    (do (retraction have x) (pldb/db-fact location x @here) (println "Putting" x "down"))
+    (do (pldb/db-retraction have x) (pldb/db-fact location x @here) (println "Putting" x "down"))
     (println "You don't have" x)))
 
 (defn inventory []
@@ -187,12 +188,20 @@
 (pldb/with-db nani_facts 
   (l/run* [q] (location 'flashlight 'office))) ;; ()
 
-(pldb/db-fact location 'envelope 'desk)
-(pldb/db-fact location 'stamp 'envelope)
-(pldb/db-fact location 'key 'envelope)
+
+
+(def nani-facts1
+  (-> nani_facts
+      (pldb/db-fact location 'envelope 'desk)
+      (pldb/db-fact location 'stamp 'envelope)
+      (pldb/db-fact location 'key 'envelope)))
 
 (defn is_contained_in [T1 T2]
   (l/conde
     ((location T1 T2))
     ((l/fresh [X] (location X T2)
                 (is_contained_in T1 X)))))
+
+(pldb/with-db nani-facts1
+  (goto 'office)
+  (look))

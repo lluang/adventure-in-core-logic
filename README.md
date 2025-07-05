@@ -2,7 +2,10 @@
 
 Inspired by Adventure in Prolog
 
-Major changes between the original repository based on core.logic 0.7.4 and core.logic 1.x.   
+Major changes between the original repository based on core.logic 0.7.4
+
+core.logic 0.8.5 integrated the 'pldb' name space which included a number of breaking changes.
+  
 'defrel' moved to 'pldb/db-rel' and 'fact' moved to 'pldb/db-fact' and lots of other API changes in core.logic.
 
 getting_started.clj working, nani.clj a work in progress.
@@ -10,10 +13,9 @@ getting_started.clj working, nani.clj a work in progress.
 
 ## License
 
-Copyright (C) 2024 Louis Luangkesorn
+Copyright (C) 2012, 2024 Darko Mikulic, Louis Luangkesorn
 
-Distributed under the Eclipse Public License, the same as Clojure and the original by @dmikulic
-
+Distributed under the Eclipse Public License, the same as Clojure
 
 ## Example run
 
