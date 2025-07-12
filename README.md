@@ -13,7 +13,7 @@ getting_started.clj working, nani.clj a work in progress.
 
 ## License
 
-Copyright (C) 2012, 2024 Darko Mikulic, Louis Luangkesorn
+Copyright (C) 2012, 2025 Darko Mikulic, Louis Luangkesorn
 
 Distributed under the Eclipse Public License, the same as Clojure
 
