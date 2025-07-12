@@ -1,51 +1,57 @@
-(ns adventure_in_core_logic.getting_started
+(ns adventure-in-core-logic.getting_started
   (:refer-clojure :exclude [reify inc ==])
-  (:require [clojure.core.logic :as l]
+  (:use [clojure.core.logic :as l]
         [clojure.core.logic.pldb :as pldb]))
 
+
 (defn istrue [vfact var]
-  (if (empty? (l/run 1 [q] (vfact var))) 'no 'yes))
+  (if (empty? (run 1 [q] (vfact var))) 'no 'yes))
+
+
 
 (pldb/db-rel person x)
 
 (defn mortal [x] (person x))
 
-(def people
-  (pldb/db 
+(def person_facts
+  (pldb/db
    [person 'Socrates]
-   [person 'Plato]))
+   [person 'Plato]
+   ))
 
-(pldb/with-db people 
-  (istrue mortal 'Socrates))
 
-(pldb/with-db people 
-    (l/run* [q] (mortal q)))
+;;(run* [q] (mortal 'Socrates))
+(pldb/with-db person_facts 
+(istrue mortal 'Socrates))
 
-(pldb/with-db people
-    (l/run* [q] (mortal 'Socrates)))
+(pldb/with-db person_facts
+  (l/run 1 [q] (mortal q)))
 
 ;;(println "hello world")
-
-(def morepeople 
-  (-> people
+(def more_person_facts
+  (-> person_facts
       (pldb/db-fact person 'Zeno)
-      (pldb/db-fact person 'Arisotle)))
+      (pldb/db-fact person 'Aristotle)
+      ))
 
-(pldb/with-db morepeople
-  (l/run* [q] (mortal q)))
 
 (defn mortal-report []
   (println "Known mortals are:")
-  (doseq [i (pldb/with-db morepeople (l/run* [q] (mortal q)))] (println i)))
+  (pldb/with-db more_person_facts
+    (l/run* [q] (mortal q))))
+
+  ;  (doseq [i (l/run* [q] (mortal q))] (println i))))
 
 (mortal-report)
 
-(pldb/db-rel customer)
+
+(pldb/db-rel customer name city credit)
 
 (def customerlist
-  (pldb/db
-    [customer "John Jones" 'Boston 'good_credit]
-    [customer "Sally Smith" 'Chicago 'good_credit]))
+ (pldb/db
+  [customer "John Jones" 'Boston 'good_credit]
+  [customer "Sally Smith" 'Chicago 'good_credit]))
+
 
 (pldb/with-db customerlist
   (l/run* [name name city credit] (customer name city credit)))
@@ -54,8 +60,8 @@
 
 (def windowlist
   (pldb/db
-      [window 'main 2 2 20 72]
-      [window 'errors 15 40 20 78]))
+   [window 'main 2 2 20 72]
+   [window 'errors 15 40 20 78]))
 
 (pldb/with-db windowlist 
   (l/run* [name ux uy lx ly] (window name ux uy lx ly)))
