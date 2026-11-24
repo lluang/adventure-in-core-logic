@@ -5,6 +5,7 @@ Inspired by Adventure in Prolog
 Major changes between the original repository based on core.logic 0.7.4
 
 core.logic 0.8.5 integrated the 'pldb' name space which included a number of breaking changes.
+Current version in this repository is core.logic 1.1.1
   
 'defrel' moved to 'pldb/db-rel' and 'fact' moved to 'pldb/db-fact' and lots of other API changes in core.logic.
 
